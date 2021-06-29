@@ -20,15 +20,23 @@ public class PlayerController : MonoBehaviour
     private Rigidbody playerRB;
     private Animator anim;
     private AudioSource playerAudio;
+    private GameManager gameManager;
 
+    private void Awake()
+    {
+        Physics.gravity = new Vector3(0, -9.8F, 0);
+    }
     // Start is called before the first frame update
     void Start()
     {
         playerRB = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
         playerAudio = GetComponent<AudioSource>();
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         Physics.gravity *= gravityModifier;
         normalSpeed = speed;
+
+        runningFX.Stop();
     }
 
     // Update is called once per frame
@@ -43,14 +51,13 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Ground"))
+        if (collision.gameObject.CompareTag("Ground") && !gameOver)
         {
             isOnGround = true;
             allowDoubleJump = true;
-            Run();
-            print("Ground");
+            StartRunning();
         }
-        else if (collision.gameObject.CompareTag("Obstacles"))
+        else if (collision.gameObject.CompareTag("Obstacles") && !gameOver)
         {
             gameOver = true;
             allowDoubleJump = false;
@@ -63,11 +70,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void Run()
+    public void StartRunning()
     {
         anim.SetFloat("Speed_f", speed);
         anim.SetBool("Static_b", true);
         runningFX.Play();
+        isOnGround = true;
+        allowDoubleJump = true;
     }
 
     void ClickSpaceToJump()
@@ -93,14 +102,19 @@ public class PlayerController : MonoBehaviour
     void ClickAToBoost() {
         if (Input.GetKeyDown(KeyCode.A))
         {
-            anim.speed *= 2f;
-            speed = normalSpeed * 2;
+            anim.speed *= 3f;
+            speed = normalSpeed * 3;
+            gameManager.scoreBoostRate = 2;
+            gameManager.score_text.fontSize = 35f;
+            gameManager.score_text.color = Color.green;
         }
         
         if(Input.GetKeyUp(KeyCode.A))
         {
             anim.speed = 1;
             speed = normalSpeed;
+            gameManager.score_text.fontSize = 25f;
+            gameManager.score_text.color = Color.white;
         }
     }
 }
